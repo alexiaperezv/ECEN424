@@ -1,0 +1,230 @@
+package socket;
+
+import java.io.*;
+import java.net.*;
+import java.util.Scanner;
+
+
+
+
+public class NaiveClient  {
+	
+	
+	
+	public static void main(String[] args) throws Exception{
+	
+		//ask user for ip address & port number
+				String ip = null;
+				int port=0;
+				Scanner sc =new Scanner(System.in);
+				System.out.println("Enter IP Address \n");
+				ip=sc.next();
+				System.out.println("Enter Port Number\n");
+				port=sc.nextInt();
+				
+			
+				try {
+					
+					int serverMsg;
+					//connect to server
+					Socket mySocket = new Socket(ip,port);
+				   //read msg from server
+					BufferedReader fromServer = new BufferedReader(new InputStreamReader(mySocket.getInputStream()));
+					
+					
+					
+					//print server msg
+				
+					while ((serverMsg=fromServer.read())!='\n' ) {
+						
+						System.out.println((char)serverMsg);
+					}
+					
+					
+	
+					sc.close();
+				//closing 
+				fromServer.close();
+				mySocket.close();
+				}catch(IOException e) {
+					e.printStackTrace();
+					
+				}
+	
+	}
+}
+package socket;
+import java.io.*;
+import java.net.*;
+import java.util.Scanner;
+
+public class BufferClient {
+
+	public static void main(String[] args) throws IOException {
+		
+		//ask user for ip address & port number
+		String ip = null;
+		int port=0;
+		Scanner sc =new Scanner(System.in);
+		System.out.println("Enter IP Address\n");
+		ip=sc.next();
+		System.out.println("Enter Port Number\n");
+		port=sc.nextInt();
+		
+		
+		try {
+			
+			int serverMsg;
+			//connect to server
+			Socket mySocket = new Socket(ip,port);
+		   //read msg from server
+			BufferedReader fromServer = new BufferedReader(new InputStreamReader(mySocket.getInputStream()));
+			
+			StringBuffer stringbuffer = new StringBuffer();
+			
+			//add char from server to string buffer
+			while ((serverMsg=fromServer.read())!='\n') {
+				stringbuffer.append((char)serverMsg);
+			}
+			
+			
+			System.out.println(stringbuffer.toString());
+		
+		
+			sc.close();
+		
+		//closing 
+		fromServer.close();
+		mySocket.close();
+		}catch(IOException e) {
+			e.printStackTrace();
+			
+		}
+		
+	}
+
+}
+
+package socket;
+import java.io.*;
+import java.net.*;
+import java.util.Scanner;
+
+public class ServerMain {
+
+	public static void main(String[] args) {
+	
+	try {	
+		
+		//ask user for port & number of max clients
+		int port=0;
+		int mClients=0;
+		Scanner sc = new Scanner(System.in);
+		System.out.println("Enter port number \n");
+		port=sc.nextInt();
+		System.out.println("Enter max clients \n");
+		mClients=sc.nextInt();
+		
+		//creates server socket
+		ServerSocket myServer = new ServerSocket(port);
+	
+		
+		//get user inputs
+		String msg;
+		int n=0;
+		int i=0;
+		
+		BufferedReader userMsg= new BufferedReader(new InputStreamReader(System.in));
+		System.out.println("Enter N \n");
+		n=sc.nextInt();
+		System.out.println("Type message \n");
+		msg=userMsg.readLine();
+		
+		//establish connection
+		System.out.println("Waiting to connect with client ....");
+		
+		//number of max clients server can handle
+		while(i<mClients) {
+			Socket clientRequest = myServer.accept();
+			System.out.println("Connected to client");
+			
+			
+			new ClientHandler(clientRequest,msg,n).start();
+			
+			
+			i++;
+		}
+		sc.close();
+		//reached client max
+		System.out.println("Server has reached max number of Clients.Clossing server...");
+		userMsg.close();
+		myServer.close();
+		
+	
+	}catch(IOException e) {
+		e.printStackTrace();
+		
+	}
+	
+	
+	
+	
+	
+	
+	}
+}
+package socket;
+import java.io.*;
+import java.net.*;
+
+import java.util.concurrent.TimeUnit;
+
+public class ClientHandler extends Thread {
+	private Socket clientRequest;
+	private PrintWriter output;
+	private String msg;
+	private int n;
+	
+	public ClientHandler(Socket s, String msg, int n) {
+		this.clientRequest=s;
+		this.msg=msg;
+		this.n=n;
+	}
+	
+	public void run() {
+		try {
+			output = new PrintWriter(this.clientRequest.getOutputStream(), true);
+			
+			//N-1 transmissions 
+			for (int i=0; i<(this.n-1);i++) {
+				output.print(this.msg);
+				
+				
+					try {
+						//one second pause
+						TimeUnit.SECONDS.sleep(1);
+					} catch (InterruptedException e) {
+						
+						e.printStackTrace();
+					}
+				
+			}
+			//last transmission ends with a newline character
+			output.print(this.msg+"\n");
+			
+			//closing socket & print writer 
+			output.close();
+			clientRequest.close();
+		
+			
+		}catch(IOException e) {
+			e.printStackTrace();
+			
+		}
+		
+	}
+	
+}
+	
+
+
